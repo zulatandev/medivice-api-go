@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"github.com/go-redis/redis/v8"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -161,12 +162,15 @@ func handleUpdateTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDeleteTodo(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/todos/")
+	query := r.URL.Query()
+	idStr := query.Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("Deleting todo with ID: %d", id)
 
 	ctx := context.Background()
 	_, err = rdb.LRem(ctx, todosKey, 0, int64(id)).Result()
@@ -175,5 +179,6 @@ func handleDeleteTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Todo with ID %d deleted successfully", id)
 	w.WriteHeader(http.StatusNoContent)
 }
